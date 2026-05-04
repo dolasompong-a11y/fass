@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>มัจฉาสยาม | วิเคราะห์สายพันธุ์ปลาไทย</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Kanit) -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-gold: #D4AF37;
+            --dark-ocean: #0f172a;
+        }
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: var(--dark-ocean);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 102, 204, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(212, 175, 55, 0.1) 0%, transparent 50%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        /* Gold Gradient Text */
+        .text-gold-gradient {
+            background: linear-gradient(to right, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+
+        /* Scanner Effect */
+        .scanner-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 0.75rem;
+        }
+        .scanner-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: #00ffff;
+            box-shadow: 0 0 15px 5px rgba(0, 255, 255, 0.5);
+            animation: scan 2s linear infinite;
+            display: none;
+            z-index: 10;
+        }
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* Glowing Button */
+        .btn-glow {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .btn-glow:hover {
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* Custom File Input hidden */
+        input[type="file"] {
+            display: none;
+        }
+
+        /* Ambient background animation */
+        .ambient-light {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: rgba(0, 255, 255, 0.1);
+            filter: blur(100px);
+            border-radius: 50%;
+            animation: float 10s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            50% { transform: translate(30px, -50px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        /* Loading Spinner */
+        .loader {
+            border: 4px solid rgba(255,255,255,0.1);
+            border-left-color: var(--primary-gold);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="relative flex flex-col items-center p-4 sm:p-8">
+    <div class="ambient-light top-10 left-10"></div>
+    <div class="ambient-light bottom-10 right-10" style="background: rgba(212, 175, 55, 0.05); animation-delay: -5s;"></div>
+
+    <!-- Header -->
+    <header class="text-center mt-6 mb-10 z-10 w-full max-w-2xl">
+        <h1 class="text-4xl md:text-5xl font-bold mb-3 text-gold-gradient tracking-wide">
+            <i class="fa-solid fa-fish-fins mr-2"></i> มัจฉาสยาม
+        </h1>
+        <p class="text-gray-300 text-sm md:text-base font-light tracking-wider">
+            ระบบวิเคราะห์สายพันธุ์ปลาไทยอัจฉริยะ 
+            <br class="md:hidden">อ้างอิงฐานข้อมูลกรมประมงกว่า 200 ชนิด
+        </p>
+    </header>
+
+    <!-- Main Content -->
+    <main class="w-full max-w-lg z-10">
+        
+        <!-- Camera & Image Section -->
+        <div class="glass-panel rounded-3xl p-6 mb-8 transform transition-all hover:scale-[1.01]">
+            
+            <!-- Image Preview Area -->
+            <div id="imageContainer" class="scanner-container bg-black/40 rounded-xl aspect-[4/3] flex flex-col items-center justify-center border border-gray-700 mb-6 relative group">
+                <div id="scannerLine" class="scanner-line"></div>
+                <img id="imagePreview" class="absolute w-full h-full object-cover rounded-xl hidden" alt="ภาพถ่ายปลา" />
+                <video id="cameraFeed" class="absolute w-full h-full object-cover rounded-xl hidden" autoplay playsinline></video>
+                
+                <div id="placeholder" class="text-center text-gray-500 z-10 flex flex-col items-center">
+                    <i class="fa-solid fa-camera text-5xl mb-4 text-gray-600"></i>
+                    <p>เปิดกล้องหรืออัปโหลดรูปภาพเพื่อเริ่มการวิเคราะห์</p>
+                </div>
+                <canvas id="canvas" class="hidden"></canvas>
+            </div>
+
+            <!-- Controls -->
+            <div class="grid grid-cols-2 gap-4">
+                <button id="btnOpenCamera" onclick="toggleCamera()" class="glass-panel text-white py-3 px-4 rounded-xl font-medium transition hover:bg-white/10 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-video"></i> <span id="cameraBtnText">เปิดกล้อง</span>
+                </button>
+                <label class="glass-panel text-white py-3 px-4 rounded-xl font-medium transition hover:bg-white/10 flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-image"></i> อัปโหลดรูป
+                    <input type="file" id="fileInput" accept="image/*" onchange="handleFileUpload(event)">
+                </label>
+            </div>
+            
+            <button id="btnCapture" onclick="captureImage()" class="w-full mt-4 bg-gradient-to-r from-blue-600 to-blue-400 text-white py-4 px-4 rounded-xl font-bold btn-glow hidden flex justify-center items-center gap-2 text-lg">
+                <i class="fa-solid fa-camera-retro"></i> ถ่ายภาพ
+            </button>
+
+            <button id="btnAnalyze" onclick="startAnalysis()" class="w-full mt-4 bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-600 text-black py-4 px-4 rounded-xl font-bold btn-glow hidden flex justify-center items-center gap-2 text-lg">
+                <i class="fa-solid fa-microchip"></i> เริ่มวิเคราะห์สายพันธุ์
+            </button>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden flex-col items-center justify-center py-8">
+            <div class="loader mb-4"></div>
+            <p class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 font-medium animate-pulse" id="loadingText">
+                กำลังเชื่อมต่อฐานข้อมูลกรมประมง...
+            </p>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultSection" class="glass-panel rounded-3xl p-6 hidden opacity-0 transform translate-y-4 transition-all duration-700 ease-out">
+            <div class="flex items-center justify-between border-b border-gray-600/50 pb-4 mb-4">
+                <h2 class="text-xl font-semibold text-gold-gradient">
+                    <i class="fa-solid fa-id-card mr-2"></i> ข้อมูลสายพันธุ์ (Identification)
+                </h2>
+                <span id="resConfidence" class="bg-green-500/20 text-green-400 text-xs px-3 py-1 rounded-full border border-green-500/30">
+                    ความแม่นยำสูง
+                </span>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <p class="text-sm text-gray-400">ชื่อสามัญ (ไทย)</p>
+                    <p id="resThaiName" class="text-2xl font-bold text-white tracking-wide">-</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-black/30 p-3 rounded-lg border border-white/5">
+                        <p class="text-xs text-gray-400 mb-1">ชื่อสามัญ (อังกฤษ)</p>
+                        <p id="resEngName" class="text-sm font-medium text-blue-200">-</p>
+                    </div>
+                    <div class="bg-black/30 p-3 rounded-lg border border-white/5">
+                        <p class="text-xs text-gray-400 mb-1">ชื่อวิทยาศาสตร์</p>
+                        <p id="resSciName" class="text-sm font-medium text-yellow-100 italic">-</p>
+                    </div>
+                </div>
+
+                <div class="bg-black/30 p-4 rounded-lg border border-white/5">
+                    <div class="flex items-start gap-3">
+                        <i class="fa-solid fa-water text-cyan-400 mt-1"></i>
+                        <div>
+                            <p class="text-xs text-gray-400">ถิ่นอาศัย / สถานะ</p>
+                            <p id="resHabitat" class="text-sm text-gray-200">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-blue-900/20 p-4 rounded-lg border border-blue-500/20">
+                    <p class="text-xs text-blue-300 mb-2 font-semibold">
+                        <i class="fa-solid fa-circle-info mr-1"></i> ลักษณะเด่น
+                    </p>
+                    <p id="resDescription" class="text-sm text-gray-300 leading-relaxed text-justify">
+                        -
+                    </p>
+                </div>
+            </div>
+            
+            <button onclick="resetApp()" class="w-full mt-6 glass-panel py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition">
+                <i class="fa-solid fa-rotate-right mr-2"></i> วิเคราะห์ภาพใหม่
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto py-8 text-center text-xs text-gray-500 z-10">
+        <p>ขับเคลื่อนโดย Gemini AI & ฐานข้อมูลโครงสร้างปลาไทย</p>
+        <p class="mt-1 opacity-50">Siam Aqua-Lens Project © 2026</p>
+    </footer>
+
+    <script>
+        // API Configuration (Gemini API)
+        const apiKey = ""; 
+
+        // DOM Elements
+        const video = document.getElementById('cameraFeed');
+        const imagePreview = document.getElementById('imagePreview');
+        const placeholder = document.getElementById('placeholder');
+        const canvas = document.getElementById('canvas');
+        const btnOpenCamera = document.getElementById('btnOpenCamera');
+        const cameraBtnText = document.getElementById('cameraBtnText');
+        const btnCapture = document.getElementById('btnCapture');
+        const btnAnalyze = document.getElementById('btnAnalyze');
+        const fileInput = document.getElementById('fileInput');
+        const scannerLine = document.getElementById('scannerLine');
+        const loadingState = document.getElementById('loadingState');
+        const loadingText = document.getElementById('loadingText');
+        const resultSection = document.getElementById('resultSection');
+
+        let stream = null;
+        let isCameraOpen = false;
+        let currentBase64 = null;
+
+        // Camera Functions
+        async function toggleCamera() {
+            if (isCameraOpen) {
+                stopCamera();
+            } else {
+                startCamera();
+            }
+        }
+
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                video.srcObject = stream;
+                
+                // UI Updates
+                video.classList.remove('hidden');
+                imagePreview.classList.add('hidden');
+                placeholder.classList.add('hidden');
+                btnCapture.classList.remove('hidden');
+                btnAnalyze.classList.add('hidden');
+                resultSection.classList.add('hidden');
+                
+                cameraBtnText.innerText = "ปิดกล้อง";
+                isCameraOpen = true;
+                currentBase64 = null;
+                
+                // Hide result section if it was shown
+                hideResult();
+            } catch (err) {
+                console.error("Camera access denied or error:", err);
+                alert("ไม่สามารถเข้าถึงกล้องได้ กรุณาใช้ฟังก์ชันอัปโหลดรูปภาพแทน");
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+            video.classList.add('hidden');
+            if(!currentBase64) placeholder.classList.remove('hidden');
+            btnCapture.classList.add('hidden');
+            cameraBtnText.innerText = "เปิดกล้อง";
+            isCameraOpen = false;
+        }
+
+        function captureImage() {
+            if (!isCameraOpen) return;
+            
+            // Set canvas dimensions to match video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Draw video frame to canvas
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Convert to base64
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            showPreview(dataUrl);
+            stopCamera();
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if(isCameraOpen) stopCamera();
+                showPreview(e.target.result);
+                hideResult();
+            };
+            reader.readAsDataURL(file);
+            // Reset input
+            event.target.value = '';
+        }
+
+        function showPreview(dataUrl) {
+            imagePreview.src = dataUrl;
+            imagePreview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            btnAnalyze.classList.remove('hidden');
+            
+            // Extract pure base64 for API
+            currentBase64 = dataUrl.split(',')[1];
+        }
+
+        function hideResult() {
+            resultSection.style.opacity = '0';
+            resultSection.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                resultSection.classList.add('hidden');
+            }, 300);
+        }
+
+        function resetApp() {
+            hideResult();
+            imagePreview.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            btnAnalyze.classList.add('hidden');
+            currentBase64 = null;
+        }
+
+        // Loading Messages rotation
+        const loadingMessages = [
+            "กำลังเชื่อมต่อฐานข้อมูลกรมประมง...",
+            "กำลังใช้ AI วิเคราะห์ครีบและเกล็ด...",
+            "ค้นหาจาก 200 สายพันธุ์ปลาไทย...",
+            "กำลังจัดเตรียมข้อมูลทางวิทยาศาสตร์..."
+        ];
+
+        // API Call & Retries
+        const delay = ms => new Promise(res => setTimeout(res, ms));
+
+        async function fetchWithRetry(url, options, maxRetries = 5) {
+            let retries = 0;
+            const baseDelay = 1000;
+
+            while (retries < maxRetries) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return await response.json();
+                } catch (error) {
+                    retries++;
+                    if (retries >= maxRetries) {
+                        throw error;
+                    }
+                    // Exponential backoff: 1s, 2s, 4s, 8s, 16s
+                    const waitTime = baseDelay * Math.pow(2, retries - 1);
+                    await delay(waitTime);
+                }
+            }
+        }
+
+        async function startAnalysis() {
+            if (!currentBase64) return;
+
+            // UI Loading state
+            btnAnalyze.classList.add('hidden');
+            btnOpenCamera.parentElement.classList.add('hidden');
+            scannerLine.style.display = 'block';
+            loadingState.classList.remove('hidden');
+            loadingState.classList.add('flex');
+            
+            let msgIndex = 0;
+            const msgInterval = setInterval(() => {
+                msgIndex = (msgIndex + 1) % loadingMessages.length;
+                loadingText.innerText = loadingMessages[msgIndex];
+            }, 2500);
+
+            try {
+                // Prepare Gemini payload
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                
+                const promptText = `
+                    คุณคือผู้เชี่ยวชาญด้านมีนวิทยาจากกรมประมงไทย จงวิเคราะห์รูปภาพปลานี้และระบุสายพันธุ์ให้ถูกต้องที่สุด (อ้างอิงจากฐานข้อมูลปลาไทย ทั้งน้ำจืดและทะเลกว่า 200 ชนิด)
+                    หากรูปภาพไม่ใช่ปลา หรือมองไม่ชัด ให้คืนค่า "ไม่พบข้อมูล" ในฟิลด์ thaiName
+                `;
+
+                const payload = {
+                    contents: [{
+                        role: "user",
+                        parts: [
+                            { text: promptText },
+                            { inlineData: { mimeType: "image/jpeg", data: currentBase64 } }
+                        ]
+                    }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                thaiName: { type: "STRING", description: "ชื่อภาษาไทยของปลา" },
+                                englishName: { type: "STRING", description: "ชื่อสามัญภาษาอังกฤษ" },
+                                scientificName: { type: "STRING", description: "ชื่อวิทยาศาสตร์ (ตัวเอียง)" },
+                                habitat: { type: "STRING", description: "แหล่งที่พบ (เช่น แหล่งน้ำจืดทั่วไป, ทะเลสาบ, อ่าวไทย) และสถานะเศรษฐกิจ/อนุรักษ์" },
+                                description: { type: "STRING", description: "ลักษณะเด่นของปลาชนิดนี้ (สี, ครีบ, รูปร่าง) สั้นๆ กระชับ" }
+                            },
+                            required: ["thaiName", "englishName", "scientificName", "habitat", "description"]
+                        }
+                    }
+                };
+
+                const options = {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                };
+
+                // Execute Call
+                const data = await fetchWithRetry(url, options);
+                
+                // Parse Response
+                const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!resultText) throw new Error("Invalid response format");
+                
+                const fishData = JSON.parse(resultText);
+                displayResult(fishData);
+
+            } catch (error) {
+                console.error("Analysis Failed:", error);
+                displayError();
+            } finally {
+                clearInterval(msgInterval);
+                scannerLine.style.display = 'none';
+                loadingState.classList.add('hidden');
+                loadingState.classList.remove('flex');
+                btnOpenCamera.parentElement.classList.remove('hidden');
+            }
+        }
+
+        function displayResult(data) {
+            // Populate DOM elements
+            document.getElementById('resThaiName').innerText = data.thaiName || "ไม่สามารถระบุได้";
+            
+            if (data.thaiName === "ไม่พบข้อมูล" || data.thaiName.includes("ไม่ใช่ปลา")) {
+                document.getElementById('resEngName').innerText = "-";
+                document.getElementById('resSciName').innerText = "-";
+                document.getElementById('resHabitat').innerText = "โปรดอัปโหลดรูปภาพปลาที่ชัดเจนกว่านี้";
+                document.getElementById('resDescription').innerText = "-";
+                document.getElementById('resConfidence').innerText = "ข้อมูลไม่สมบูรณ์";
+                document.getElementById('resConfidence').className = "bg-red-500/20 text-red-400 text-xs px-3 py-1 rounded-full border border-red-500/30";
+            } else {
+                document.getElementById('resEngName').innerText = data.englishName || "-";
+                document.getElementById('resSciName').innerText = data.scientificName || "-";
+                document.getElementById('resHabitat').innerText = data.habitat || "-";
+                document.getElementById('resDescription').innerText = data.description || "-";
+                document.getElementById('resConfidence').innerText = "วิเคราะห์สำเร็จ";
+                document.getElementById('resConfidence').className = "bg-green-500/20 text-green-400 text-xs px-3 py-1 rounded-full border border-green-500/30";
+            }
+
+            // Animate In
+            resultSection.classList.remove('hidden');
+            // Small delay to allow display block to apply before transition
+            setTimeout(() => {
+                resultSection.style.opacity = '1';
+                resultSection.style.transform = 'translateY(0)';
+            }, 50);
+            
+            // Scroll to bottom softly
+            setTimeout(() => {
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            }, 300);
+        }
+
+        function displayError() {
+            document.getElementById('resThaiName').innerText = "เกิดข้อผิดพลาดในการวิเคราะห์";
+            document.getElementById('resEngName').innerText = "Connection Error";
+            document.getElementById('resSciName').innerText = "-";
+            document.getElementById('resHabitat').innerText = "ระบบเซิร์ฟเวอร์ขัดข้อง หรือไม่มีการเชื่อมต่ออินเทอร์เน็ต";
+            document.getElementById('resDescription').innerText = "โปรดลองใหม่อีกครั้งในภายหลัง";
+            
+            document.getElementById('resConfidence').innerText = "ล้มเหลว";
+            document.getElementById('resConfidence').className = "bg-red-500/20 text-red-400 text-xs px-3 py-1 rounded-full border border-red-500/30";
+
+            resultSection.classList.remove('hidden');
+            setTimeout(() => {
+                resultSection.style.opacity = '1';
+                resultSection.style.transform = 'translateY(0)';
+            }, 50);
+        }
+    </script>
+</body>
+</html>
